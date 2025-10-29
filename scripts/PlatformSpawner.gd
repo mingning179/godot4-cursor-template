@@ -172,4 +172,3 @@ func get_next_platform(current: Node3D) -> Node3D:
 	if current_index >= 0 and current_index < platforms.size() - 1:
 		return platforms[current_index + 1]
 	return null
-

@@ -17,3 +17,12 @@ shape = SubResource("CapsuleShape3D_1")
 [node name="RayCast3D" type="RayCast3D" parent="."]
 target_position = Vector3(0, -1, 0)
 enabled = true
+
+[node name="OmniLight3D" type="OmniLight3D" parent="."]
+light_color = Color(0.2, 0.7, 1, 1)
+light_energy = 1.5
+light_indirect_energy = 1.0
+light_volumetric_fog_energy = 1.0
+omni_range = 6.0
+omni_attenuation = 2.0
+shadow_enabled = false

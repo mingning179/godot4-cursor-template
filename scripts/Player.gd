@@ -202,53 +202,74 @@ func on_landed() -> void:
 	# 重新启用跳跃
 	can_jump = true
 	
-	# 检测落在哪个平台上
-	if ray_cast.is_colliding():
-		var collider: Node3D = ray_cast.get_collider() as Node3D
-		if collider and collider.has_method("is_perfect_landing"):
-			var previous_platform: Node3D = current_platform
-			current_platform = collider
+	# ⚠️ 关键修复：使用碰撞检测而不是射线检测，解决边缘检测问题
+	# 检查所有碰撞，找到平台
+	var collider: Node3D = null
+	for i in range(get_slide_collision_count()):
+		var collision: KinematicCollision3D = get_slide_collision(i)
+		var collision_object: Object = collision.get_collider()
+		if collision_object and collision_object is Node3D:
+			var node: Node3D = collision_object as Node3D
+			# 检查是否是平台（有 is_perfect_landing 方法）
+			if node.has_method("is_perfect_landing"):
+				# 检查碰撞法线，确保是从上方落地
+				var normal: Vector3 = collision.get_normal()
+				if normal.y > 0.7:  # 法线向上（y分量大于0.7，大约45度内）
+					collider = node
+					break
+	
+	# 如果通过碰撞没找到，尝试射线检测（兜底）
+	if not collider and ray_cast.is_colliding():
+		var ray_collider: Object = ray_cast.get_collider()
+		if ray_collider and ray_collider is Node3D:
+			var node: Node3D = ray_collider as Node3D
+			if node.has_method("is_perfect_landing"):
+				collider = node
+	
+	# 处理落地逻辑
+	if collider:
+		var previous_platform: Node3D = current_platform
+		current_platform = collider
+		
+		# ⚠️ 关键修复：只有跳到目标平台才算成功
+		if next_platform and collider == next_platform:
+			# 跳到了正确的目标平台！
 			
-			# ⚠️ 关键修复：只有跳到目标平台才算成功
-			if next_platform and collider == next_platform:
-				# 跳到了正确的目标平台！
-				
-				# 计算跳跃距离（用于距离奖励）
-				var jump_distance: float = 0.0
-				if previous_platform:
-					jump_distance = previous_platform.global_position.distance_to(collider.global_position)
-				
-				# 判断是否完美落地
-				var is_perfect: bool = collider.is_perfect_landing(position)
-				
-				# 通知游戏管理器加分
-				var game_manager: Node = get_node("/root/GameManager")
-				if game_manager:
-					game_manager.add_score(1, is_perfect, jump_distance)
-				
-				# 发射落地信号（会触发生成新平台和更新目标）
-				landed.emit(position, current_platform)
-				
-			elif collider == previous_platform:
-				# 跳回了原来的平台（原地跳或后退），扣分！
-				var game_manager: Node = get_node("/root/GameManager")
-				if game_manager:
-					game_manager.add_score(-2, false, 0.0)  # 扣2分
-				# ⚠️ 不更新目标，玩家需要继续跳到原目标
-				
-			elif not next_platform:
-				# 还没有设置目标平台（游戏刚开始），允许但不加分
-				# 发射信号以便设置第一个目标
-				landed.emit(position, current_platform)
-				
-			else:
-				# 跳到了错误的平台（不是目标也不是当前）
-				print("跳到了错误的平台！游戏结束")
-				on_fell_off()
+			# 计算跳跃距离（用于距离奖励）
+			var jump_distance: float = 0.0
+			if previous_platform:
+				jump_distance = previous_platform.global_position.distance_to(collider.global_position)
+			
+			# 判断是否完美落地
+			var is_perfect: bool = collider.is_perfect_landing(position)
+			
+			# 通知游戏管理器加分
+			var game_manager: Node = get_node("/root/GameManager")
+			if game_manager:
+				game_manager.add_score(1, is_perfect, jump_distance)
+			
+			# 发射落地信号（会触发生成新平台和更新目标）
+			landed.emit(position, current_platform)
+			
+		elif collider == previous_platform:
+			# 跳回了原来的平台（原地跳或后退），扣分！
+			var game_manager: Node = get_node("/root/GameManager")
+			if game_manager:
+				game_manager.add_score(-2, false, 0.0)  # 扣2分
+			# ⚠️ 不更新目标，玩家需要继续跳到原目标
+			
+		elif not next_platform:
+			# 还没有设置目标平台（游戏刚开始），允许但不加分
+			# 发射信号以便设置第一个目标
+			landed.emit(position, current_platform)
+			
 		else:
-			can_jump = true  # 即使不是平台也允许跳跃
+			# 跳到了错误的平台（不是目标也不是当前）
+			print("跳到了错误的平台！游戏结束")
+			on_fell_off()
 	else:
-		can_jump = true  # 允许跳跃
+		# 没有检测到平台，允许继续跳跃（可能落在其他物体上）
+		can_jump = true
 
 # 掉落处理
 func on_fell_off() -> void:
@@ -274,4 +295,3 @@ func reset_player(start_position: Vector3) -> void:
 # 设置下一个目标平台
 func set_next_platform(platform: Node3D) -> void:
 	next_platform = platform
-

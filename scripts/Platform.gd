@@ -47,23 +47,24 @@ func setup_platform() -> void:
 		box_mesh.size = platform_size
 		mesh_instance.mesh = box_mesh
 		
-		# 创建材质
+		# 创建材质（不透明，明亮）
 		var material: StandardMaterial3D = StandardMaterial3D.new()
 		var color: Color = get_platform_color()
 		material.albedo_color = color
 		material.shading_mode = BaseMaterial3D.SHADING_MODE_PER_PIXEL
 		material.disable_receive_shadows = false
 		
-		# 添加金属度和粗糙度，让材质更真实
-		material.metallic = 0.2
-		material.roughness = 0.7
+		# 适度金属质感
+		material.metallic = 0.4
+		material.metallic_specular = 0.7
+		material.roughness = 0.4
 		
-		# 添加发光效果
+		# 适度发光
 		material.emission_enabled = true
-		material.emission = color * 0.3
-		material.emission_energy_multiplier = 1.0
+		material.emission = color * 0.5
+		material.emission_energy_multiplier = 1.2
 		
-		# 添加边缘光效果
+		# 边缘光
 		material.rim_enabled = true
 		material.rim = 0.5
 		material.rim_tint = 0.8
@@ -86,11 +87,11 @@ func setup_platform() -> void:
 func get_platform_color() -> Color:
 	match platform_type:
 		PlatformType.NORMAL:
-			return Color(1.0, 1.0, 1.0)  # 白色
+			return Color(1.0, 1.0, 1.0)  # 纯白色
 		PlatformType.SMALL:
-			return Color(1.0, 0.5, 0.5)  # 红色
+			return Color(1.0, 0.3, 0.4)  # 鲜红色
 		PlatformType.LARGE:
-			return Color(0.5, 1.0, 0.5)  # 绿色
+			return Color(0.3, 0.8, 1.0)  # 天蓝色
 	return Color.WHITE
 
 # 检查是否完美落地
