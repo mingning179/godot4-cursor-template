@@ -2,6 +2,10 @@
 .godot/
 *.tmp
 *.import
+*.uid
+
+# Android build template (auto-generated)
+android/
 
 # Export artifacts
 builds/
