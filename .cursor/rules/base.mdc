@@ -1,0 +1,208 @@
+---
+alwaysApply: true
+---
+
+# Godot 4 AI 开发规则
+
+## 🤖 核心原则
+
+### 代码规范
+- 所有变量和函数必须使用类型注解
+- 使用 `@onready` 延迟节点引用初始化
+- 使用 `snake_case` 命名变量和函数
+- 使用 `UPPER_SNAKE_CASE` 命名常量
+- 使用 `PascalCase` 命名场景和脚本文件
+
+### 项目结构（推荐布局）
+```
+godot-project/
+├── .godot/           # Godot自动生成目录（版本控制忽略）
+├── addons/           # Godot插件和扩展（可选）
+├── scenes/           # 场景文件 (.tscn)
+├── scripts/          # GDScript脚本 (.gd)
+├── assets/           # 资源文件（可选子目录）
+│   ├── materials/    # 材质资源
+│   ├── textures/     # 纹理资源
+│   ├── sounds/       # 音频资源
+│   ├── fonts/        # 字体资源
+│   └── shaders/      # 着色器文件
+├── autoload/         # 全局单例脚本（可选）
+├── tests/            # 测试文件（可选）
+├── locales/          # 国际化翻译文件（可选）
+├── icon.svg          # 项目图标
+├── project.godot     # 项目配置文件
+├── export_presets.cfg # 导出预设配置
+├── .gitignore        # Git忽略文件
+└── README.md         # 项目说明文档
+```
+
+**⚠️ 注意**: Godot没有强制性的项目结构要求，这是基于社区最佳实践的推荐布局。
+
+---
+
+## 📝 代码编写规则
+
+### 代码结构顺序
+```gdscript
+extends Node
+
+# 1. 预加载资源
+const RESOURCE = preload("res://path/to/resource.tres")
+
+# 2. 导出变量
+@export var config_value: int = 0
+
+# 3. 节点引用
+@onready var label: Label = $Label
+
+# 4. 变量声明
+var score: int = 0
+
+# 5. 信号定义
+signal value_changed(new_value: int)
+
+# 6. _ready()
+func _ready() -> void:
+    pass
+
+# 7. 业务逻辑函数
+func update_score(new_score: int) -> void:
+    pass
+```
+
+### Autoload 使用
+```gdscript
+# ❌ 错误：直接使用类名
+GameManager.score = 100
+
+# ✅ 正确：通过 get_node 访问
+var game_manager = get_node("/root/GameManager")
+game_manager.score = 100
+```
+
+### 信号通信
+```gdscript
+# 定义信号
+signal player_died
+signal score_changed(new_score: int)
+
+# 发射信号
+score_changed.emit(100)
+
+# 连接信号
+func _ready():
+    GameManager.score_changed.connect(_on_score_changed)
+
+func _on_score_changed(new_score: int):
+    update_ui(new_score)
+```
+
+### 错误处理
+```gdscript
+# 安全的节点访问
+var button = get_node_or_null("Button")
+if button:
+    button.pressed.connect(_on_button_pressed)
+
+# 使用 assert 验证
+func set_value(value: int) -> void:
+    assert(value >= 0, "值不能为负数")
+```
+
+---
+
+## 🚀 模板使用流程
+
+### 1. 初始化项目
+使用命令：`/init`
+- AI 分析项目状态并创建结构
+- 生成基础场景和脚本
+- 配置项目设置
+
+### 2. 配置项目信息
+使用命令：`/config`
+- AI 引导设置项目名称和包名
+- 更新相关配置文件
+- 验证配置正确性
+
+### 3. 检查项目质量
+使用命令：`/check`
+- AI 运行语法检查
+- 分析代码质量
+- 提供改进建议
+
+### 4. 导出 Android APK
+使用命令：`/export`
+- AI 处理导出环境
+- 执行 APK 导出
+- 提供安装和测试指导
+
+---
+
+## 🚫 禁止事项
+
+1. ❌ 禁止直接使用 autoload 名作为类名
+2. ❌ 禁止在 `_process` 中频繁使用 `print`
+3. ❌ 禁止硬编码字符串和数字
+4. ❌ 禁止忽略节点空值检查
+5. ❌ 禁止创建循环依赖
+6. ❌ 禁止忘记释放资源（使用 `queue_free()`）
+7. ❌ 禁止在不检查语法的情况下提交代码
+8. ❌ 禁止使用过时的 API
+9. ❌ 禁止创建超过 500 行的单文件
+10. ❌ 禁止未签名 APK 直接安装
+
+---
+
+## ✅ 必须遵循
+
+1. ✅ 所有节点引用使用 `@onready`
+2. ✅ 所有变量添加类型注解
+3. ✅ 修改代码后检查语法
+4. ✅ 使用信号进行跨场景通信
+5. ✅ 使用 autoload 管理全局状态
+6. ✅ 使用资源文件而非代码创建样式
+7. ✅ 错误处理完善
+8. ✅ 性能关键代码优化
+9. ✅ 代码结构清晰分层
+10. ✅ 导出前运行语法检查
+
+---
+
+## 🔧 Godot 命令行规则
+
+### 重要：--quit 参数使用规则
+
+**⚠️ 关键原则**：除了启动游戏界面外，所有 Godot 命令行操作都必须使用 `--quit` 参数，否则会卡住！
+
+#### ✅ 正确使用 --quit 参数的命令
+```bash
+# 语法检查
+godot --headless --quit
+
+# 导出 APK
+godot --headless --quit --export-debug "Android" builds/app_debug.apk
+godot --headless --quit --export-release "Android" builds/app_release.apk
+
+# 安装构建模板并导出
+godot --headless --quit --export-debug "Android" builds/app_debug.apk --install-android-build-template
+```
+
+#### ❌ 错误：不使用 --quit 参数（会卡住）
+```bash
+# 错误：会卡住
+godot --headless --export-debug "Android" builds/app_debug.apk
+godot --headless
+```
+
+#### ✅ 例外：启动游戏界面不需要 --quit
+```bash
+# 正确：启动游戏界面
+godot .
+godot . --verbose --debug
+godot . --fullscreen
+```
+
+#### 📋 命令分类
+- **需要 --quit**：语法检查、导出、构建模板安装等自动化操作
+- **不需要 --quit**：启动游戏界面、编辑器等交互式操作
